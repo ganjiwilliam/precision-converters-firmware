@@ -173,10 +173,10 @@ void stm32_system_init(void)
 	SystemClock_Config();
 	MX_SPI1_Init();
 	MX_GPIO_Init();
-	MX_SAI1_Init();
+	//MX_SAI1_Init();
 #if !defined (TARGET_SDP_K1)
 	MX_USART3_UART_Init();
-	MX_GPDMA1_Init();
+	//MX_GPDMA1_Init();
 	MX_ICACHE_Init();
 #else
 	MX_UART5_Init();
@@ -190,7 +190,7 @@ void stm32_system_init(void)
  * @param hsai - pointer to a SAI_HandleTypeDef structure
  * @return None
  */
-void ad4170_dma_rx_half_cplt(SAI_HandleTypeDef *hsai)
+/*void ad4170_dma_rx_half_cplt(SAI_HandleTypeDef *hsai)
 {
 #if (INTERFACE_MODE == TDM_MODE)
 #if (DATA_CAPTURE_MODE == CONTINUOUS_DATA_CAPTURE)
@@ -200,32 +200,32 @@ void ad4170_dma_rx_half_cplt(SAI_HandleTypeDef *hsai)
 	}
 #endif
 #endif // INTERFACE_MODE
-}
+}*/
 
 /*!
  * @brief SAI DMA Receive Complete Callback function
  * @param hsai - pointer to a SAI_HandleTypeDef structure
  * @return None
  */
-void ad4170_dma_rx_cplt(SAI_HandleTypeDef *hsai)
+/*void ad4170_dma_rx_cplt(SAI_HandleTypeDef *hsai)
 {
 #if (INTERFACE_MODE == TDM_MODE)
 	if (data_capture_operation) {
 #if (DATA_CAPTURE_MODE == CONTINUOUS_DATA_CAPTURE)
-		/* TDM read is not invoked in-time to read the first channel in sequencer
+		 TDM read is not invoked in-time to read the first channel in sequencer
 		 * due to higher execution time of MCU, which results into missing of
 		 * first sample. So ignoring the first (num_of_active_channels-1) samples
-		 * before filling up the buffer */
+		 * before filling up the buffer
 		if (!tdm_read_started) {
-			/* Start TDM DMA read as the peripheral is disabled in Normal(Linear)
-			 * Buffer Mode upon buffer completion */
+			 Start TDM DMA read as the peripheral is disabled in Normal(Linear)
+			 * Buffer Mode upon buffer completion
 			no_os_tdm_read(ad4170_tdm_desc, dma_buff, TDM_DMA_READ_SIZE << 1);
 			tdm_read_started = true;
 		} else {
 			end_tdm_dma_to_cb_transfer(ad4170_tdm_desc, ad4170_iio_dev_data,
 						   TDM_DMA_READ_SIZE, BYTES_PER_SAMPLE);
-			/* Start TDM DMA read as the peripheral is disabled in Normal(Linear)
-			 * Buffer Mode upon buffer completion */
+			 Start TDM DMA read as the peripheral is disabled in Normal(Linear)
+			 * Buffer Mode upon buffer completion
 			no_os_tdm_read(ad4170_tdm_desc, dma_buff, TDM_DMA_READ_SIZE << 1);
 		}
 #else
@@ -241,7 +241,7 @@ void ad4170_dma_rx_cplt(SAI_HandleTypeDef *hsai)
 		update_dma_buffer_overflow();
 	}
 #endif // INTERFACE_MODE
-}
+}*/
 
 /**
  * @brief   Callback function to flag the capture of number

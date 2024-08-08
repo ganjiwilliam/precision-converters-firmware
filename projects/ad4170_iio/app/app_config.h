@@ -81,7 +81,7 @@
 
 /* Select the active platform (default is Mbed) */
 #if !defined(ACTIVE_PLATFORM)
-#define ACTIVE_PLATFORM		MBED_PLATFORM
+#define ACTIVE_PLATFORM		STM32_PLATFORM
 #endif
 
 /* Select active IIO client */
@@ -112,7 +112,7 @@
 
 /* Select the ADC data capture mode (default is CC mode) */
 #if !defined(DATA_CAPTURE_MODE)
-#define DATA_CAPTURE_MODE	CONTINUOUS_DATA_CAPTURE
+#define DATA_CAPTURE_MODE	BURST_DATA_CAPTURE
 #endif
 
 /* Enable the UART/VirtualCOM port connection (default VCOM) */
@@ -174,9 +174,9 @@
 #define tx_trigger_extra_init_params  stm32_tx_trigger_extra_init_params
 #endif
 
-#define spi_ops		stm32_spi_ops
+//#define spi_ops		stm32_spi_ops
 #define uart_ops	stm32_uart_ops
-#define gpio_ops	stm32_gpio_ops
+//#define gpio_ops	stm32_gpio_ops
 #define i2c_ops 	stm32_i2c_ops
 #define irq_ops		stm32_gpio_irq_ops
 #define tdm_ops      stm32_tdm_platform_ops
@@ -270,7 +270,7 @@
 #define VIRTUAL_COM_SERIAL_NUM	(FIRMWARE_NAME "_" DEVICE_NAME "_" STR(PLATFORM_NAME))
 
 /* Baud rate for IIO application UART interface */
-#define IIO_UART_BAUD_RATE	(230400)
+#define IIO_UART_BAUD_RATE	(115200)
 
 /* Enable/Disable the use of SDRAM for ADC data capture buffer */
 //#define USE_SDRAM		// Uncomment to use SDRAM for data buffer

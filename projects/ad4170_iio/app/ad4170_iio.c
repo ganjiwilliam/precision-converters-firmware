@@ -2771,45 +2771,6 @@ static int32_t ad4170_iio_init(struct iio_device **desc)
 		return -EINVAL;
 	}
 
-	/* Update IIO device init parameters */
-	for (chn = 0; chn < AD4170_NUM_CHANNELS; chn++) {
-		update_vltg_conv_scale_factor(chn);
-
-		setup = p_ad4170_dev_inst->config.setup[chn].setup_n;
-		bipolar = p_ad4170_dev_inst->config.setups[setup].afe.bipolar;
-
-		if (bipolar) {
-			chn_scan[chn].sign = 's';
-		} else {
-			chn_scan[chn].sign = 'u';
-		}
-
-		chn_scan[chn].realbits = CHN_REAL_BITS;
-		chn_scan[chn].storagebits = CHN_STORAGE_BITS;
-#if (INTERFACE_MODE == SPI_DMA_MODE)
-		chn_scan[chn].shift = CHN_STORAGE_BITS - CHN_REAL_BITS;
-		chn_scan[chn].is_big_endian = true;
-#else
-		chn_scan[chn].shift = 0;
-		chn_scan[chn].is_big_endian = false;
-#endif
-	}
-
-	iio_ad4170_inst->num_ch = NO_OS_ARRAY_SIZE(iio_ad4170_channels);
-	iio_ad4170_inst->channels = iio_ad4170_channels;
-	iio_ad4170_inst->attributes = global_attributes;
-
-	iio_ad4170_inst->submit = iio_ad4170_submit_buffer;
-	iio_ad4170_inst->pre_enable = iio_ad4170_prepare_transfer;
-	iio_ad4170_inst->post_disable = iio_ad4170_end_transfer;
-#if (DATA_CAPTURE_MODE == CONTINUOUS_DATA_CAPTURE) && (INTERFACE_MODE != SPI_DMA_MODE)
-	iio_ad4170_inst->trigger_handler = iio_ad4170_trigger_handler;
-#endif
-
-	iio_ad4170_inst->debug_reg_read = debug_reg_read;
-	iio_ad4170_inst->debug_reg_write = debug_reg_write;
-
-	num_of_channels = iio_ad4170_inst->num_ch;
 	*desc = iio_ad4170_inst;
 
 	return 0;
@@ -2885,17 +2846,17 @@ int32_t ad4170_iio_initialize(void)
 	}
 
 	/* Read context attributes */
-	init_status = get_iio_context_attributes(&iio_init_params.ctx_attrs,
+	/*init_status = get_iio_context_attributes(&iio_init_params.ctx_attrs,
 			&iio_init_params.nb_ctx_attr,
 			eeprom_desc,
 			HW_MEZZANINE_NAME,
 			STR(HW_CARRIER_NAME),
-			&hw_mezzanine_is_valid);
+			&hw_mezzanine_is_valid);*/
 	if (init_status) {
 		return init_status;
 	}
 
-	if (hw_mezzanine_is_valid) {
+	if (hw_mezzanine_is_valid || 1) {
 		/* Initialize AD4170 device and peripheral interface */
 		init_status = ad4170_init(&p_ad4170_dev_inst, &ad4170_init_params);
 		if (init_status) {

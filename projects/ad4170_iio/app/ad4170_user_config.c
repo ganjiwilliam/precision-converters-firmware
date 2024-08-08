@@ -54,7 +54,7 @@ struct ad4170_init_param ad4170_user_config_params = {
 		.max_speed_hz = AD4170_MAX_SPI_SPEED,	// Max SPI Speed
 		.chip_select = SPI_CSB,		// Chip Select
 		.mode = NO_OS_SPI_MODE_3,		// CPOL = 1, CPHA = 1
-		.platform_ops = &spi_ops,
+		//.platform_ops = &spi_ops,
 		.device_id = SPI_DEVICE_ID,
 		.extra = &spi_extra_init_params // SPI extra configurations
 	},
@@ -286,7 +286,4 @@ struct ad4170_init_param ad4170_user_config_params = {
 		}
 	},
 
-	&gpio_init_sync_inb,
-	&gpio_init_rdy,		// DIAG_AUX1
-	&gpio_init_ldac_n	// DIAG_AUX2
 };
