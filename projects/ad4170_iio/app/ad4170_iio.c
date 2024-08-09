@@ -103,7 +103,7 @@ static int32_t ad4170_code_to_straight_binary(uint32_t code, uint8_t chn);
 #define DATA_BUFFER_SIZE			(131072)
 #endif
 #endif	// ACTIVE_IIO_CLIENT
-static int8_t adc_data_buffer[DATA_BUFFER_SIZE] = { 0 };
+
 #endif
 
 /* Local backend buffer (for storing IIO commands and responses) */
@@ -114,6 +114,7 @@ static char app_local_backend_buff[APP_LOCAL_BACKEND_BUF_SIZE];
 
 /* Max number of cached registers */
 #define N_REGISTERS_CACHED ADC_REGISTER_COUNT
+uint32_t dummy_adc_reg_values[ADC_REGISTER_COUNT];
 
 /******************************************************************************/
 /*************************** Types Declarations *******************************/
@@ -133,6 +134,7 @@ struct iio_device *p_iio_ad4170_dev;
 /* IIO hw trigger descriptor */
 static struct iio_hw_trig *ad4170_hw_trig_desc;
 
+static uint32_t adc_data_buffer[5] = {0x11, 0x22, 0x33, 0x44, 0x55};
 #if (DATA_CAPTURE_MODE == CONTINUOUS_DATA_CAPTURE)
 static struct iio_trigger ad4170_iio_trig_desc = {
 	.is_synchronous = true,
@@ -530,6 +532,7 @@ static int set_sampling_frequency(void *device,
 	/* NA - Sampling frequency is fixed in the firmware */
 	return -EINVAL;
 }
+
 
 
 /*!
@@ -1499,7 +1502,7 @@ static uint32_t debug_reg_search(uint32_t addr, uint32_t *reg_addr_offset)
  */
 int32_t debug_reg_read(void *dev, uint32_t reg, uint32_t *readval)
 {
-	int32_t ret;
+	int32_t ret = 0;
 	uint32_t reg_base_add; 		// Base register address
 	uint32_t reg_addr_offset;	// Offset of input register address from its base
 
@@ -1508,15 +1511,14 @@ int32_t debug_reg_read(void *dev, uint32_t reg, uint32_t *readval)
 	}
 
 	reg_base_add = debug_reg_search(reg, &reg_addr_offset);
-
-	/* Read data from device register */
-	ret = ad4170_spi_reg_read(dev, reg_base_add, readval);
-	if (ret) {
-		return ret;
+	if (reg_base_add == AD4170_REG_DEVICE_CONFIG)
+	{
+		*readval = dummy_adc_reg_values[2];
 	}
-
-	/* Extract the specific byte location for register entity */
-	*readval = (*readval >> (reg_addr_offset * BYTE_SIZE)) & BYTE_MASK;
+	else if (reg_base_add == AD4170_REG_CHIP_TYPE)
+	{
+			*readval = dummy_adc_reg_values[3];
+	}
 
 	return 0;
 }
@@ -1541,22 +1543,14 @@ int32_t debug_reg_write(void *dev, uint32_t reg, uint32_t writeval)
 
 	reg_base_add = debug_reg_search(reg, &reg_addr_offset);
 
-	/* Read the register contents */
-	ret = ad4170_spi_reg_read(dev, reg_base_add, &data);
-	if (ret) {
-		return ret;
-	}
-
-	/* Modify the register contents to write user data at specific
-	 * reister entity location */
-	data &= ~(BYTE_MASK << (reg_addr_offset * BYTE_SIZE));
-	data |= (uint32_t)((writeval & BYTE_MASK) << (reg_addr_offset * BYTE_SIZE));
-
-	/* Write data into device register */
-	ret = ad4170_spi_reg_write(dev, reg_base_add, data);
-	if (ret) {
-		return ret;
-	}
+		if (reg_base_add == AD4170_REG_DEVICE_CONFIG)
+		{
+			dummy_adc_reg_values[2] = writeval;
+		}
+		else if (reg_base_add == AD4170_REG_CHIP_TYPE)
+		{
+			dummy_adc_reg_values[3] = writeval;
+		}
 
 	return 0;
 }
@@ -1905,30 +1899,7 @@ static int32_t ad4170_read_burst_data_spi(uint32_t nb_of_samples,
 	uint32_t adc_raw;
 	int32_t ret;
 
-	ret = ad4170_start_data_capture();
-	if (ret) {
-		return ret;
-	}
 
-	while (sample_index < nb_of_samples) {
-		/* This function monitors RDY line to read ADC result */
-		ret = ad4170_read24(p_ad4170_dev_inst, &adc_raw, 1);
-		if (ret) {
-			return ret;
-		}
-
-		ret = no_os_cb_write(iio_dev_data->buffer->buf, &adc_raw, BYTES_PER_SAMPLE);
-		if (ret) {
-			return ret;
-		}
-
-		sample_index++;
-	}
-
-	ret = ad4170_stop_data_capture();
-	if (ret) {
-		return ret;
-	}
 
 	return 0;
 }
@@ -2090,47 +2061,17 @@ static int32_t ad4170_read_burst_data_spi_dma(uint32_t nb_of_samples,
  */
 static int32_t iio_ad4170_submit_buffer(struct iio_device_data *iio_dev_data)
 {
-	uint32_t ret;
+	uint32_t ret = 0;
 	uint32_t nb_of_samples;
 	nb_of_samples = iio_dev_data->buffer->size / BYTES_PER_SAMPLE;
-
-#if (INTERFACE_MODE  != TDM_MODE)
-	if (!buf_size_updated) {
-		/* Update total buffer size according to requested samples
-		 * IIO from  for proper alignment of multi-channel IIO buffer data */
-		iio_dev_data->buffer->buf->size = iio_dev_data->buffer->size;
-		buf_size_updated = true;
-	}
-#endif
-
-#if (DATA_CAPTURE_MODE == BURST_DATA_CAPTURE)
-#if (INTERFACE_MODE == SPI_INTERRUPT_MODE)
 	ret = ad4170_read_burst_data_spi(nb_of_samples, iio_dev_data);
 	if (ret) {
 		return ret;
 	}
-#elif (INTERFACE_MODE == TDM_MODE)
-	ret = ad4170_read_burst_data_tdm(iio_dev_data->buffer->size, iio_dev_data);
-	if (ret) {
-		return ret;
-	}
-#elif (INTERFACE_MODE == SPI_DMA_MODE)
-	ret = ad4170_read_burst_data_spi_dma(nb_of_samples, iio_dev_data);
-	if (ret) {
-		return ret;
-	}
-#endif
-#else // CONTINUOUS_DATA_CAPTURE
-#if(INTERFACE_MODE == SPI_DMA_MODE)
-	ret = ad4170_read_burst_data_spi_dma(nb_of_samples, iio_dev_data);
-	if (ret) {
-		return ret;
-	}
-#endif
-#endif
 
 	return 0;
 }
+
 
 /**
  * @brief Cache register values modified by attributes
@@ -2562,44 +2503,9 @@ struct iio_attribute channel_input_attributes[] = {
 /* IIOD device (global) attributes list */
 static struct iio_attribute global_attributes[] = {
 	{
-		.name = "demo_config",
-		.show = get_demo_config,
-		.store = set_demo_config
-	},
-	{
 		.name = "sampling_frequency",
 		.show = get_sampling_frequency,
 		.store = set_sampling_frequency,
-	},
-	{
-		.name = "diagnostic_error_status",
-		.show = get_diag_error,
-		.store = set_diag_error
-	},
-	{
-		.name = "adc_mode_available",
-		.show = get_adc_mode_available,
-		.store = set_adc_mode_available
-	},
-	{
-		.name = "adc_mode",
-		.show = get_adc_mode,
-		.store = set_adc_mode
-	},
-	{
-		.name = "filter_available",
-		.show = get_filter_available,
-		.store = set_filter_available
-	},
-	{
-		.name = "clock_ctrl",
-		.show = get_clock,
-		.store = set_clock
-	},
-	{
-		.name = "clock_ctrl_available",
-		.show = get_clock_available,
-		.store = set_clock_available
 	},
 
 	END_ATTRIBUTES_ARRAY
@@ -2770,7 +2676,8 @@ static int32_t ad4170_iio_init(struct iio_device **desc)
 	if (!iio_ad4170_inst) {
 		return -EINVAL;
 	}
-
+	iio_ad4170_inst->debug_reg_read = debug_reg_read;
+	iio_ad4170_inst->debug_reg_write = debug_reg_write;
 	*desc = iio_ad4170_inst;
 
 	return 0;

@@ -19,7 +19,7 @@
 
 #include "main.h"
 #include "stm32_spi.h"
-#include "stm32_i2c.h"
+
 #include "stm32_uart.h"
 #include "stm32_gpio.h"
 #include "app_config.h"
@@ -28,7 +28,7 @@
 #else
 #include "stm32_dma.h"
 #endif
-#include "stm32_tdm.h"
+
 #if (INTERFACE_MODE == SPI_DMA_MODE)
 #include "stm32_pwm.h"
 #endif

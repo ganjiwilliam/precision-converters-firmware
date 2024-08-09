@@ -82,12 +82,8 @@ struct stm32_gpio_irq_init_param stm32_trigger_gpio_irq_init_params = {
 };
 #endif
 
-#if (INTERFACE_MODE == TDM_MODE)
-/* SAI-TDM STM32 PLatform Specific Init Parameters */
-struct stm32_tdm_init_param stm32_tdm_extra_init_params = {
-	.base = STM32_SAI_BASE,
-};
-#endif
+
+
 
 /* STM32 GPIO specific parameters */
 struct stm32_gpio_init_param stm32_csb_gpio_extra_init_params = {
@@ -95,10 +91,7 @@ struct stm32_gpio_init_param stm32_csb_gpio_extra_init_params = {
 	.speed = GPIO_SPEED_FREQ_VERY_HIGH,
 };
 
-/* STM32 I2C specific parameters */
-struct stm32_i2c_init_param stm32_i2c_extra_init_params = {
-	.i2c_timing = I2C_TIMING
-};
+
 
 #if (INTERFACE_MODE == SPI_DMA_MODE)
 /* STM32 Tx DMA channel extra init params */
